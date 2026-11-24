@@ -8,10 +8,10 @@ download_by_mc2(){
     if [ -z "$1" ] || [ -z "$2" ];then
         return 1
     fi
-    if download_by_curl "$1" "$2";then
+    if download_by_curl "$1" "$2" "${3:-}";then
         return 0
     else
-        if download_by_wget "$1" "$2";then
+        if download_by_wget "$1" "$2" "${3:-}";then
             return 0
         fi
     fi
@@ -36,7 +36,7 @@ download_by_wget(){
 
     wget_bin="$(which wget)"
     wget_agent="$wget_bin/$($wget_bin --version | head -n1 | awk '{print $3}')"
-    download_agent="${wget_agent} ${MC2_agent}"
+    download_agent="${3:-${wget_agent} ${MC2_agent}}"
 
     echo_date "ℹ️使用 $wget_bin"
     echo_date "下载地址： ${_url}"
@@ -113,8 +113,6 @@ download_by_curl(){
     fi
 
     CURL_BIN="$(which curl)"
-    CURL_VER="$CURL_BIN/$($CURL_BIN --version | head -n1 | awk '{print $2}')"
-    UA_STRING="${CURL_VER} ${MC2_agent}"
 
     echo_date "ℹ️使用 $CURL_BIN "
     echo_date "下载地址： ${_url}"
@@ -126,16 +124,21 @@ download_by_curl(){
 
     _url_domain="$(echo "$_url" | sed -E 's#^[a-zA-Z]+://([^/:]+).*#\1#')"
 
+    if [ -n "${3:-}" ]; then
+        set -- --user-agent "$3"
+    else
+        set --
+    fi
     echo_date "⬇️使用常规网络下载..."
     
     echo_date "1️⃣使第一次尝试下载..."
-    $CURL_BIN ${_curl_arg} -H "$UA_STRING" --connect-timeout 6 "${_url_encode}" > "${_url_file_tmp}"
+    $CURL_BIN ${_curl_arg} "$@" --connect-timeout 6 "${_url_encode}" > "${_url_file_tmp}"
     if [ $? = 0 ] && [ "$(wc -c < "${_url_file_tmp}")" -gt 0 ];then
         return 0
     fi
     
     echo_date "2️⃣第二次尝试下载..."
-    $CURL_BIN ${_curl_arg} -H "$UA_STRING" --connect-timeout 10 "${_url_encode}" > "${_url_file_tmp}"
+    $CURL_BIN ${_curl_arg} "$@" --connect-timeout 10 "${_url_encode}" > "${_url_file_tmp}"
     if [ $? = 0 ] && [ "$(wc -c < "${_url_file_tmp}")" -gt 0 ];then
         return 0
     fi

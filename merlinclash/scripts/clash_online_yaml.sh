@@ -7,6 +7,10 @@ LOCK_FILE=/var/lock/merlinclash_yaml_online_update.lock
 . /koolshare/scripts/clash_download.sh
 . /koolshare/scripts/clash_config_name.sh
 
+case "$clash_agent" in
+    Meta/v?*) subscription_agent="clash.meta/${clash_agent#Meta/v}" ;;
+    *) subscription_agent="clash.meta" ;;
+esac
 
 cd . > "${LOG_FILE:?}"
 # rm -rf /tmp/upload/*.yaml
@@ -40,7 +44,7 @@ start_online_update(){
         #echo_date merlinclash_link=$merlinc_link >> "$LOG_FILE"
         #wget下载文件
         #wget --no-check-certificate -t3 -T30 -4 -O /tmp/upload/$upname "$merlinc_link"
-        if download_by_mc2 "$merlinc_link" "/tmp/upload/$upname";then
+        if download_by_mc2 "$merlinc_link" "/tmp/upload/$upname" "$subscription_agent";then
         	echo_date "订阅配置文件 下载完成" >> "$LOG_FILE"
         else
 			echo_date "订阅配置文件 下载失败..." >> "$LOG_FILE"
@@ -81,7 +85,7 @@ start_regular_update(){
     echo_date "订阅配置名称【${upname}】" | tee -a "$Regularlog" | tee -a "$LOG_FILE" >/dev/null
     echo_date "订阅配置地址【${merlinc_link}】" | tee -a "$Regularlog" | tee -a "$LOG_FILE" >/dev/null
     #wget --no-check-certificate -t3 -T30 -4 -O /tmp/upload/$upname "$merlinc_link"
-    if download_by_mc2 "$merlinc_link" "/tmp/upload/$upname" >> "$Regularlog";then
+    if download_by_mc2 "$merlinc_link" "/tmp/upload/$upname" "$subscription_agent" >> "$Regularlog";then
 		echo_date "订阅配置文件 ${upname} 下载完成" | tee -a "$LOG_FILE" | tee -a "$Regularlog" >/dev/null
 	else
 		echo_date "订阅配置文件 ${upname} 下载失败..." >> "$LOG_FILE"
@@ -150,7 +154,7 @@ case $2 in
     echo "" > "$LOG_FILE"
     http_response "$1"
     echo_date "在线clash订阅" >> "$LOG_FILE"
-    echo_date "订阅UserAgent为：$UA" >> "$LOG_FILE"
+    echo_date "订阅UserAgent为：$subscription_agent" >> "$LOG_FILE"
     echo_date "clash订阅链接处理" >> "$LOG_FILE"
     start_online_update >> "$LOG_FILE"
     status_code=$?
