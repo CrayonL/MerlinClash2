@@ -1115,12 +1115,14 @@
             push_data("clash_online_yaml.sh", action, dbus_post);
 
         }
+        function requireConfigName(value) {
+            if ($.trim($.trim(value).replace(/\.yaml$/, ""))) return true;
+            alert("请先添加配置名称，再下载配置。");
+            return false;
+        }
         function get_online_yaml(action) {
-            var dbus_post = {}; updateInputValue();
-            if (!$.trim($('#merlinclash_uploadrename').val())) {
-                alert("重命名框不能为空！");
-                return false;
-            }
+            var dbus_post = {};
+            if (!requireConfigName($('#merlinclash_uploadrename').val())) return false;
             if (!$.trim($('#merlinclash_links').val())) {
                 alert("订阅链接不能为空！");
                 return false;
@@ -1135,10 +1137,7 @@
         }
         function get_online_yaml3(action) {
             var dbus_post = {};
-            if (!$.trim($('#merlinclash_uploadrename4').val())) {
-                alert("重命名框不能为空！");
-                return false;
-            }
+            if (!requireConfigName($('#merlinclash_uploadrename4').val())) return false;
             if (!$.trim($('#merlinclash_links3').val())) {
                 alert("订阅链接不能为空！");
                 return false;
@@ -1459,10 +1458,7 @@
         //------------------------------------导出绕行设置以及还原 END-------------------------------------------
         function ssconvert(action) {
             var dbus_post = {};
-            if (!$.trim($('#merlinclash_uploadrename3').val())) {
-                alert("重命名框不能为空！");
-                return false;
-            }
+            if (!requireConfigName($('#merlinclash_uploadrename3').val())) return false;
             dbus_post["merlinclash_uploadrename3"] = db_merlinclash["merlinclash_uploadrename3"] = (E("merlinclash_uploadrename3").value);
             dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = action;
             push_data("clash_online_yaml3.sh", action, dbus_post);
@@ -1486,10 +1482,7 @@
         //------------------------------------------更新yaml BEGIN--------------------------------------
         function update_yaml_sel(action) {
             var dbus_post = {};
-            if (!$.trim($('#merlinclash_delyamlsel').val())) {
-                alert("请选择一个配置文件！");
-                return false;
-            }
+            if (!requireConfigName($('#merlinclash_delyamlsel').val())) return false;
             dbus_post["merlinclash_delyamlsel"] = db_merlinclash["merlinclash_delyamlsel"] = (E("merlinclash_delyamlsel").value);
             dbus_post["merlinclash_action"] = db_merlinclash["merlinclash_action"] = "26"
             push_data("clash_updateyamlsel.sh", action, dbus_post);
@@ -1498,10 +1491,7 @@
         //----------------------------下载配置 BEGIN-----------------------------
         function download_yaml_sel(action) {
             //下载前清空/tmp/upload文件夹下的yaml格式文件
-            if (!$.trim($('#merlinclash_delyamlsel').val())) {
-                alert("配置文件不能为空！");
-                return false;
-            }
+            if (!requireConfigName($('#merlinclash_delyamlsel').val())) return false;
             var dbus_post = {};
             clear_yaml();
             dbus_post["merlinclash_delyamlsel"] = db_merlinclash["merlinclash_delyamlsel"] = (E("merlinclash_delyamlsel").value);
@@ -1516,7 +1506,7 @@
                 dataType: "json",
                 success: function (response) {
                     yamlname = response.result;
-                    download(yamlname);
+                    if (requireConfigName(yamlname)) download(yamlname);
                 }
             });
         }
@@ -3207,13 +3197,9 @@
 
             for (i = 0; i < yamllist.length - 1; i++) {
                 var a = yamllist[i];
-                //$("#merlinclash_yamlsel").append("<option value='"+a+"' >"+a+"</option>");
-                if (a == db_merlinclash["merlinclash_yamlsel"]) {//如果是用户选择的，则变成被选中状态
-                    $("#merlinclash_yamlsel").append("<option value=" + a + " selected>" + a + "</option>")
-                } else {
-                    $("#merlinclash_yamlsel").append("<option value=" + a + ">" + a + "</option>");
-                }
-                $("#merlinclash_delyamlsel").append("<option value=" + a + ">" + a + "</option>");
+                if (!$.trim(a)) continue;
+                $("#merlinclash_yamlsel").append(new Option(a, a, false, a == db_merlinclash["merlinclash_yamlsel"]));
+                $("#merlinclash_delyamlsel").append(new Option(a, a));
             }
         }
         function yamlcus_select_get() {

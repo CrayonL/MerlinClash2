@@ -2,6 +2,7 @@
 
 export KSROOT=/koolshare
 source $KSROOT/scripts/base.sh
+. /koolshare/scripts/clash_config_name.sh
 eval $(dbus export merlinclash_)
 alias echo_date='echo 【$(date +%Y年%m月%d日\ %X)】:'
 LOG_FILE=/tmp/upload/merlinclash_log.txt
@@ -19,7 +20,11 @@ get(){
 }
 yamlsel=$(get merlinclash_delyamlsel)
 downyamlfile(){
-    filename=$(echo $yamlsel.yaml)
+    if ! require_config_name "$yamlsel" 2>>"$LOG_FILE"; then
+        http_response ""
+        return 1
+    fi
+    filename="$yamlsel.yaml"
     echo_date "$filename" >> $LOG_FILE
 
     cp -rf $yamlpath/$filename $tmp_path/$filename

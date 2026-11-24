@@ -1,6 +1,7 @@
 #!/bin/sh
 
 source /koolshare/scripts/base.sh
+. /koolshare/scripts/clash_config_name.sh
 eval $(dbus export merlinclash)
 alias echo_date='echo 【$(date +%Y年%m月%d日\ %X)】:'
 
@@ -27,6 +28,10 @@ mcenable=$(get merlinclash_enable)
 
 update_yaml_sel(){
 
+	if ! require_config_name "$yamlname" 2>>"$LOGFILE"; then
+		echo BBABBBBC >> "$LOGFILE"
+		exit 1
+	fi
 	dbus set merlinclash_updateflag="0"
 	echo_date "待更新的配置文件为：$yamlname，日志文件位置为:$LOG_FILE" >> $LOGFILE
 	echo_date "待更新的配置文件为：$yamlname，日志文件位置为:$LOG_FILE" >> $LOG_FILE
@@ -53,6 +58,10 @@ update_yaml_sel(){
 				upname=$(echo $line |grep -o "\"name\".*"|awk -F\" '{print $4}')
 				#名字去除.yaml后缀
 				upname=$(echo $upname | awk -F"." '{print $1}')
+				if ! require_config_name "$upname" 2>>"$LOGFILE"; then
+					echo BBABBBBC >> "$LOGFILE"
+					exit 1
+				fi
 				merlinc_link=$(echo $line | grep -o "\"link\".*"|awk -F\" '{print $4}')
 				subscription_type=$(echo $line | grep -o "\"type\".*"|awk -F\" '{print $4}')
 				use=$(echo $line | grep -o "\"use\".*"|awk -F\" '{print $4}')

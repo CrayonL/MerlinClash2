@@ -3,6 +3,7 @@
 LOCK_FILE=/var/lock/merlinclash_regular_update.lock
 
 . /koolshare/scripts/clash_base.sh
+. /koolshare/scripts/clash_config_name.sh
 
 Regularlog=/tmp/upload/merlinclash_regular.log
 
@@ -20,13 +21,15 @@ cd . > "${Regularlog:?}"
 
 echo_date "定时订阅进程启动" >> "$Regularlog"
 if [ ! -f "$filename" ];then
-    touch "$filename"
     echo_date "丢失订阅文件 $filename" >> "$Regularlog"
     merlinclash_links="$(get merlinclash_links)"
     if [ -n "$merlinclash_links" ];then
+        require_config_name "$yamlsel" 2>>"$Regularlog" || exit 1
         merlinclash_links="$(decode_url_link "$merlinclash_links")"
         echo_date "使用当前订阅链接 $merlinclash_links 订阅" >> "$Regularlog"
-        echo "\"name\":\"$(get merlinclash_yamlsel).yaml\",\"link\":\"$merlinclash_links\",\"type\":\"1\",\"use\":\"0\"" | tee "$filename"
+        echo "\"name\":\"$yamlsel.yaml\",\"link\":\"$merlinclash_links\",\"type\":\"1\",\"use\":\"0\"" | tee "$filename"
+    else
+        touch "$filename"
     fi
 fi
 if [ -z "$(cat "$filename")" ];then
@@ -43,6 +46,7 @@ if [ "$subscribeplan" = "all" ]; then
         upname=$(echo "$line" |grep -o "\"name\".*"|awk -F\" '{print $4}')
         # 名字去除.yaml后缀 subname
         upname=$(echo "$upname" | awk -F"." '{print $1}')
+        require_config_name "$upname" 2>>"$Regularlog" || continue
         # link https://..
         merlinc_link=$(echo "$line" | grep -o "\"link\".*"|awk -F\" '{print $4}')
         # type:1
@@ -187,6 +191,7 @@ if [ "$subscribeplan" = "all" ]; then
         sh /koolshare/merlinclash/clashconfig.sh restart
     fi
 else
+    require_config_name "$yamlsel" 2>>"$Regularlog" || exit 1
     sh /koolshare/scripts/clash_updateyamlsel.sh 0 1 "$yamlsel" >> "$Regularlog" 2>&1
     #订阅后重启clash
     sleep 5

@@ -5,6 +5,7 @@ LOCK_FILE=/var/lock/merlinclash_yaml_online_update.lock
 . /koolshare/scripts/clash_base.sh
 
 . /koolshare/scripts/clash_download.sh
+. /koolshare/scripts/clash_config_name.sh
 
 
 cd . > "${LOG_FILE:?}"
@@ -22,6 +23,8 @@ Regularlog=/tmp/upload/merlinclash_regular.log
 
 start_online_update(){
     updateflag="start_online_update"
+    upname_tmp=$(get merlinclash_uploadrename)
+    require_config_name "$upname_tmp" 2>>"$LOG_FILE" || return 1
     link1=$(get merlinclash_links)
     links=$(decode_url_link "$link1")
     merlinc_link="$links"
@@ -32,14 +35,7 @@ start_online_update(){
         sleep 2
         echo_date "退出订阅程序" >> "$LOG_FILE"
     else
-        upname_tmp=$(get merlinclash_uploadrename)
-        
-        newname=$(date "+%H%M%S")
-        if [ -n "$upname_tmp" ]; then
-            upname=$upname_tmp.yaml
-        else
-            upname=$newname.yaml
-        fi
+        upname="$upname_tmp.yaml"
         echo_date "订阅配置文件 重命名为：$upname" 
         #echo_date merlinclash_link=$merlinc_link >> "$LOG_FILE"
         #wget下载文件
@@ -78,6 +74,7 @@ start_regular_update(){
     updateflag="start_regular_update"
 
     subscription_type="1"
+    require_config_name "$1" 2>>"$Regularlog" || return 1
     upname="$1.yaml"
     merlinc_link="$2"
 

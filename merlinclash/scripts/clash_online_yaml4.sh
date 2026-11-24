@@ -2,6 +2,7 @@
 
 export KSROOT=/koolshare
 source $KSROOT/scripts/base.sh
+. /koolshare/scripts/clash_config_name.sh
 eval $(dbus export merlinclash_)
 alias echo_date='echo 【$(date +%Y年%m月%d日\ %X)】:'
 LOG_FILE=/tmp/upload/merlinclash_log.txt
@@ -195,10 +196,6 @@ start_online_update_hnd(){
 	links=$(decode_url_link $links3)
 	merlinc_link=$(echo $links | sed 's/%0A/%7C/g')
 	echo_date "订阅地址是：$merlinc_link" >> $LOG_FILE
-	upname_tmp=$(get merlinclash_uploadrename4)
-	#echo_date "订阅文件重命名为：$upname_tmp" >> $LOG_FILE
-	time=$(date "+%Y%m%d-%H%M%S")
-	newname=$(echo $time | awk -F'-' '{print $2}')
 	echo_date "配置名是：$upname_tmp" >> $LOG_FILE
 	if [ "$customrule" == "0" ]; then
 		case $acl4ssrsel in
@@ -297,11 +294,7 @@ start_online_update_hnd(){
 	echo_date "即将开始转换，需要一定时间，请等候处理" >> $LOG_FILE
 	sleep 3s
 	echo_date "生成订阅链接：$links" >> $LOG_FILE
-	if [ -n "$upname_tmp" ]; then
-		upname="$_name$upname_tmp.yaml"
-	else
-		upname="$_name$newname.yaml"
-	fi
+	upname="$_name$upname_tmp.yaml"
 	#wget下载文件
 	#wget --no-check-certificate -t3 -T30 -4 -O /tmp/upload/$upname "$links"
 	echo_date "使用常规网络下载..." >> $LOG_FILE
@@ -427,10 +420,6 @@ start_dc_online_update_hnd(){
 	links=$(decode_url_link $dclink3)
 	merlinc_link=$(echo $links | sed 's/%0A/%7C/g')
 	echo_date "订阅地址是：$merlinc_link" >> $LOG_FILE
-		upname_tmp=$(get merlinclash_dc_uploadrename4)
-		#echo_date "订阅文件重命名为：$upname_tmp" >> $LOG_FILE
-		time=$(date "+%Y%m%d-%H%M%S")
-		newname=$(echo $time | awk -F'-' '{print $2}')
 		if [ "$DCURLflag" == "0" ]; then
 			echo_date "订阅规则类型是：$(get_acl4ssrsel_name $acl4ssrsel)"
 			echo_date "subconverter进程：$(pidof subconverter)" >> $LOG_FILE
@@ -520,11 +509,7 @@ start_dc_online_update_hnd(){
 			customrule="0"
 		fi
 		echo_date "生成订阅链接：$links" >> $LOG_FILE
-		if [ -n "$upname_tmp" ]; then
-			upname="$_name$upname_tmp.yaml"
-		else
-			upname="$_name$newname.yaml"
-		fi
+		upname="$_name$upname_tmp.yaml"
 			#wget下载文件
 			#wget --no-check-certificate -t3 -T30 -4 -O /tmp/upload/$upname "$links"
 			echo_date "使用常规网络下载..." >> $LOG_FILE
@@ -859,6 +844,23 @@ unset_lock(){
 	flock -u 233
 	rm -rf "$LOCK_FILE"
 }
+
+case "$2" in
+    16) upname_tmp=$(get merlinclash_uploadrename4) ;;
+    21) upname_tmp=$(get merlinclash_dc_uploadrename4) ;;
+    4|6|7) upname_tmp=$1 ;;
+    *) exit 0 ;;
+esac
+case "$2" in
+    16|21) name_log=$LOG_FILE ;;
+    *) name_log=$Regularlog ;;
+esac
+if ! require_config_name "$upname_tmp" 2>>"$name_log"; then
+    case "$2" in
+        16|21) http_response "$1"; echo BBABBBBC >> "$LOG_FILE" ;;
+    esac
+    exit 1
+fi
 
 case $2 in
 16)
